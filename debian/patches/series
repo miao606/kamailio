@@ -9,6 +9,9 @@ upstream/app_lua-Added-sr.xavp.get_keys-function.patch
 upstream/app_lua-Added-sr.xavp.get-function-in-order-to-get-a.patch
 upstream/0001-core-do-not-repeat-key-names-on-xavp_get_list_key_na.patch
 upstream/0001-core-print-src-address-details-if-initial-message-pa.patch
+upstream/0001-core-execute-event_route-core-receive-parse-error-bl.patch
+upstream/0001-core-efectively-run-the-event_route-core-receive-par.patch
+upstream/0001-core-fix-condition-to-lookup-envet_route-core-receiv.patch
 upstream/debug/0002-core-updated-dprint-api-to-enable-support-for-debug-.patch
 upstream/debug/0003-debugger-option-to-set-debug-level-per-module.patch
 upstream/debug/core-use-pointer-to-pv_spec_t-on-lvalue-union.-Use-p.patch

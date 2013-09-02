@@ -1,0 +1,32 @@
+From 86bdfaa3efe7804bcfde3da4f63b252c74e417b7 Mon Sep 17 00:00:00 2001
+From: Daniel-Constantin Mierla <miconda@gmail.com>
+Date: Thu, 22 Aug 2013 15:44:05 +0200
+Subject: [PATCH] core: fix condition to lookup
+ envet_route[core:receive-parse-error]
+
+- reported by Juha Heinanen
+---
+ events.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/events.c b/events.c
+index 2518486..ae4fead 100644
+--- a/events.c
++++ b/events.c
+@@ -48,9 +48,11 @@ void sr_core_ert_init(void)
+ 	/* 0 - is not a valid index in event_route blocks list */
+ 	_sr_core_ert_list.init_parse_error = route_get(&event_rt,
+ 											"core:receive-parse-error");
+-	if(_sr_core_ert_list.init_parse_error>=0
+-			&& event_rt.rlist[_sr_core_ert_list.init_parse_error]!=NULL) {
++	if(_sr_core_ert_list.init_parse_error<=0
++				|| event_rt.rlist[_sr_core_ert_list.init_parse_error]==NULL) {
+ 		_sr_core_ert_list.init_parse_error = -1;
++	} else {
++		LM_DBG("event_route[core:receive-parse-error] is defined\n");
+ 	}
+ }
+ 
+-- 
+1.7.10.4
+

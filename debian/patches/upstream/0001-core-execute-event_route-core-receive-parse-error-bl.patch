@@ -1,0 +1,121 @@
+From 2d826efb7dbcf9b3b49c376bcd079ab1e7642a44 Mon Sep 17 00:00:00 2001
+From: Daniel-Constantin Mierla <miconda@gmail.com>
+Date: Thu, 22 Aug 2013 13:01:55 +0200
+Subject: [PATCH] core: execute event_route[core:receive-parse-error] block on
+ error of initial sip message parsing
+
+- note that the SIP message is broken in this case, but it gets access
+  to source and local socket addresses (ip, port, proto, af) as well as
+  the whole message buffer and its size
+---
+ events.c  |   35 +++++++++++++++++++++++++++++++++++
+ events.h  |    8 ++++++++
+ main.c    |    4 ++++
+ receive.c |    1 +
+ 4 files changed, 48 insertions(+)
+
+diff --git a/events.c b/events.c
+index 95bce9b..2518486 100644
+--- a/events.c
++++ b/events.c
+@@ -27,11 +27,46 @@
+ 
+ #include "dprint.h"
+ #include "mem/mem.h"
++#include "route.h"
+ #include "events.h"
+ 
+ static sr_event_cb_t _sr_events_list;
+ static int _sr_events_inited = 0;
+ 
++typedef struct _sr_core_ert {
++	int init_parse_error;
++} sr_core_ert_t;
++
++static sr_core_ert_t _sr_core_ert_list;
++
++/**
++ *
++ */
++void sr_core_ert_init(void)
++{
++	memset(&_sr_core_ert_list, 0, sizeof(sr_core_ert_t));
++	/* 0 - is not a valid index in event_route blocks list */
++	_sr_core_ert_list.init_parse_error = route_get(&event_rt,
++											"core:receive-parse-error");
++	if(_sr_core_ert_list.init_parse_error>=0
++			&& event_rt.rlist[_sr_core_ert_list.init_parse_error]!=NULL) {
++		_sr_core_ert_list.init_parse_error = -1;
++	}
++}
++
++/**
++ *
++ */
++void sr_core_ert_run(sip_msg_t *msg, int e)
++{
++	switch(e) {
++		case SR_CORE_ERT_RECEIVE_PARSE_ERROR:
++			if(likely(_sr_core_ert_list.init_parse_error<=0))
++				return;
++		break;
++	}
++}
++
+ /**
+  *
+  */
+diff --git a/events.h b/events.h
+index d9e27b1..376da07 100644
+--- a/events.h
++++ b/events.h
+@@ -59,4 +59,12 @@ int sr_event_register_cb(int type, sr_event_cb_f f);
+ int sr_event_exec(int type, void *data);
+ int sr_event_enabled(int type);
+ 
++
++/* shortcut types for core event routes */
++/* initial parsing error in message receive function */
++#define SR_CORE_ERT_RECEIVE_PARSE_ERROR		1
++
++void sr_core_ert_init(void);
++void sr_core_ert_run(sip_msg_t *msg, int e);
++
+ #endif
+diff --git a/main.c b/main.c
+index 24d3dc8..05d431e 100644
+--- a/main.c
++++ b/main.c
+@@ -145,6 +145,7 @@
+ #include "script_cb.h"
+ #include "nonsip_hooks.h"
+ #include "ut.h"
++#include "events.h"
+ #include "signals.h"
+ #ifdef USE_RAW_SOCKS
+ #include "raw_sock.h"
+@@ -2253,6 +2254,9 @@ try_again:
+ 	if (pv_reinit_buffer()<0)
+ 		goto error;
+ 
++	/* init lookup for core event routes */
++	sr_core_ert_init();
++
+ 	if (dont_fork_cnt)
+ 		dont_fork = dont_fork_cnt;	/* override by command line */
+ 
+diff --git a/receive.c b/receive.c
+index 6b5740f..7dcc26f 100644
+--- a/receive.c
++++ b/receive.c
+@@ -146,6 +146,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
+ 				"core parsing of SIP message failed (%s:%d/%d)\n",
+ 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
+ 				(int)msg->rcv.proto);
++		sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
+ 		goto error02;
+ 	}
+ 	DBG("After parse_msg...\n");
+-- 
+1.7.10.4
+
