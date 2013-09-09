@@ -1,0 +1,32 @@
+--- a/modules/uac_redirect/rd_funcs.c
++++ b/modules/uac_redirect/rd_funcs.c
+@@ -94,13 +94,18 @@
+ 		} else {
+ 			max = maxt?((maxt-cts_added>=maxb)?maxb:(maxt-cts_added)):maxb;
+ 		}
++		LM_DBG("maxt=%d, maxb=%d, max=%d\n", maxt, maxb, max);
+ 		if (max==0)
+ 			continue;
++		LM_DBG("1\n");
+ 		/* put the response code into the acc_param reason struct */
+ 		reason->code = t->uac[i].last_received;
++		LM_DBG("1\n");
+ 		reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
++		LM_DBG("2\n");
+ 		/* get the contact from it */
+ 		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
++		LM_DBG("3\n");
+ 		if ( n<0 ) {
+ 			LM_ERR("get contact from shm_reply branch %d failed\n",i);
+ 			/* do not go to error, try next branches */
+@@ -108,8 +113,9 @@
+ 			/* count the added contacts */
+ 			cts_added += n;
+ 		}
++		LM_DBG("done cycle\n");
+ 	}
+-
++	LM_DBG("done loop\n");
+ 	/* restore original new_uri */
+ 	msg->new_uri = backup_uri;
+ 
