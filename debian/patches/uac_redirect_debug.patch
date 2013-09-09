@@ -7,15 +7,15 @@
 +		LM_DBG("maxt=%d, maxb=%d, max=%d\n", maxt, maxb, max);
  		if (max==0)
  			continue;
-+		LM_DBG("1\n");
++		LM_DBG("1 reason:%p\n", reason);
  		/* put the response code into the acc_param reason struct */
  		reason->code = t->uac[i].last_received;
-+		LM_DBG("1\n");
- 		reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
 +		LM_DBG("2\n");
+ 		reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
++		LM_DBG("3\n");
  		/* get the contact from it */
  		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
-+		LM_DBG("3\n");
++		LM_DBG("4\n");
  		if ( n<0 ) {
  			LM_ERR("get contact from shm_reply branch %d failed\n",i);
  			/* do not go to error, try next branches */
